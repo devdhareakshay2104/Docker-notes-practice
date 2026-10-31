@@ -883,3 +883,777 @@ By completing this practical, I learned:
 14. How to run a Java application inside a Docker container.
 
 **End of Practical – Docker Installation and Java Application Containerization**
+
+# Docker Networking Practical on AWS EC2
+## Two-Tier Flask Application with MySQL
+
+# 1. Introduction to Docker Networking
+
+### What is Docker Networking?
+
+Docker Networking is a feature of Docker that allows containers to communicate with each other, the host machine, and external networks.
+
+It helps different containers exchange information and work together as part of an application.
+
+### Why do we use Docker Networking?
+
+- To allow containers to communicate with each other.
+- To connect application containers with database containers.
+- To allow containers to access external networks.
+- To provide network isolation.
+- To connect multiple application services.
+
+### Types of Docker Networks
+
+| Network | Description |
+|---|---|
+| Bridge | Allows containers on the same Docker host to communicate. |
+| Host | Uses the host machine's network namespace. |
+| None | Provides network isolation. |
+| Overlay | Connects containers running on multiple Docker hosts. |
+| Macvlan | Gives containers their own MAC addresses. |
+
+### Docker Networking Architecture
+
+Docker Network → Flask Container → MySQL Container
+
+Both containers communicate through a common Docker network.
+
+---
+
+# PART 1: DOCKER NETWORKING COMMANDS
+
+## 2. Check Available Docker Networks
+
+Command:
+
+```bash
+docker network ls
+```
+
+This command displays all available Docker networks.
+
+Expected output:
+
+```text
+NETWORK ID     NAME      DRIVER
+xxxxxxxx       bridge    bridge
+xxxxxxxx       host      host
+xxxxxxxx       none      null
+```
+
+### Explanation
+
+- `docker network` – Docker networking command.
+- `ls` – Lists available networks.
+
+## 3. Create Docker Network
+
+Command:
+
+```bash
+docker network create mynetwork -d bridge
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker network create | Creates a Docker network. |
+| mynetwork | Network name. |
+| -d | Specifies the network driver. |
+| bridge | Bridge network driver. |
+
+Expected output:
+
+```text
+xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Check the network:
+
+```bash
+docker network ls
+```
+
+Now you will see `mynetwork` in the network list.
+
+### What is Bridge Networking?
+
+Bridge networking allows containers running on the same Docker host to communicate with each other.
+
+---
+
+# PART 2: TWO-TIER FLASK APPLICATION
+
+## 4. What is a Two-Tier Application?
+
+A two-tier application is an application architecture that consists of two main layers.
+
+**1. Application Tier**
+
+- Handles user requests.
+- Processes application logic.
+- Communicates with the database.
+- In this practical, we use Flask.
+
+**2. Database Tier**
+
+- Stores application data.
+- Manages database records.
+- Handles data retrieval.
+- In this practical, we use MySQL.
+
+### Technologies Used
+
+| Technology | Purpose |
+|---|---|
+| AWS EC2 | Cloud server |
+| Ubuntu | Operating system |
+| MobaXterm | SSH connection |
+| Docker | Containerization |
+| Docker Network | Container communication |
+| Flask | Backend application |
+| MySQL | Database |
+| GitHub | Source code repository |
+
+### Project Architecture
+
+```text
+          USER
+            |
+            |
+       WEB BROWSER
+            |
+            |
+       AWS EC2 SERVER
+            |
+            |
+      DOCKER NETWORK
+         two-tier
+            |
+       --------------
+       |            |
+       |            |
+  FLASK APP       MYSQL
+  CONTAINER      CONTAINER
+       |            |
+       |            |
+  APPLICATION    DATABASE
+     TIER          TIER
+```
+
+### Why do we need Docker Networking in this project?
+
+Here, Flask and MySQL are running inside separate Docker containers.
+
+The Flask application needs to communicate with MySQL to store and retrieve information.
+
+Therefore, we create a common Docker network named `two-tier` and connect both containers to it.
+
+---
+
+# PART 3: CLONE GITHUB REPOSITORY
+
+## 5. GitHub Repository
+
+Project name: Two-Tier Flask Application
+
+GitHub Repository:
+
+https://github.com/LondheShubham153/two-tier-flask-app.git
+
+### What is Git Clone?
+
+Git clone is a command used to download an existing GitHub repository to our server.
+
+### Step 1: Navigate to Projects Directory
+
+```bash
+cd ~/projects
+```
+
+### Step 2: Clone Repository
+
+```bash
+git clone https://github.com/LondheShubham153/two-tier-flask-app.git
+```
+
+Expected output:
+
+```text
+Cloning into 'two-tier-flask-app'...
+remote: Enumerating objects...
+Receiving objects...
+```
+
+### Step 3: Navigate to Project
+
+```bash
+cd two-tier-flask-app
+```
+
+### Step 4: Display Project Files
+
+```bash
+ls
+```
+
+### Step 5: Display Application Code
+
+```bash
+cat app.py
+```
+
+This displays the Flask application source code.
+
+---
+
+# PART 4: CREATE DOCKERFILE AND BUILD IMAGE
+
+## 6. What is a Dockerfile?
+
+A Dockerfile is a text file containing instructions used to build a Docker image.
+
+It specifies the base image, working directory, application files, dependencies, and commands required to run an application.
+
+### Step 1: Open Dockerfile
+
+```bash
+vim Dockerfile
+```
+
+### Step 2: Add Dockerfile Instructions
+
+Use the Dockerfile provided in the GitHub repository.
+
+### Step 3: Display Dockerfile
+
+```bash
+cat Dockerfile
+```
+
+### Step 4: Build Flask Backend Image
+
+Command:
+
+```bash
+docker build -t two-tier-backend .
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker build | Builds Docker image. |
+| -t | Assigns image name. |
+| two-tier-backend | Image name. |
+| . | Current directory. |
+
+Expected output:
+
+```text
+Successfully built xxxxxxxxx
+Successfully tagged two-tier-backend:latest
+```
+
+### Step 5: Check Docker Images
+
+```bash
+docker images
+```
+
+Example output:
+
+```text
+REPOSITORY          TAG       IMAGE ID
+two-tier-backend    latest    xxxxxxxxx
+```
+
+---
+
+# PART 5: CREATE TWO-TIER NETWORK
+
+## 7. Create Docker Network
+
+Command:
+
+```bash
+docker network create two-tier -d bridge
+```
+
+### Explanation
+
+- `docker network create` – Creates a new network.
+- `two-tier` – Network name.
+- `-d` – Specifies the driver.
+- `bridge` – Bridge network.
+
+Expected output:
+
+```text
+xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Step 2: Check Docker Networks
+
+```bash
+docker network ls
+```
+
+You should see:
+
+```text
+NETWORK ID     NAME       DRIVER
+xxxxxxxx       bridge     bridge
+xxxxxxxx       host       host
+xxxxxxxx       none       null
+xxxxxxxx       two-tier   bridge
+```
+
+### Step 3: Inspect Docker Network
+
+```bash
+docker network inspect two-tier
+```
+
+This displays network information, including connected containers, subnet, gateway, and network driver.
+
+---
+
+# PART 6: RUN MYSQL CONTAINER
+
+## 8. Create MySQL Container
+
+MySQL is used as the database tier in this project.
+
+Command:
+
+```bash
+docker run -d --name mysql --network two-tier -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=devops mysql
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker run | Creates and starts a container. |
+| -d | Runs container in background. |
+| --name mysql | Assigns container name. |
+| --network two-tier | Connects container to Docker network. |
+| -e | Sets environment variables. |
+| MYSQL_ROOT_PASSWORD=root | Sets MySQL root password. |
+| MYSQL_DATABASE=devops | Creates database named devops. |
+| mysql | MySQL image. |
+
+Expected output:
+
+```text
+xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+### Step 2: Check Running Containers
+
+```bash
+docker ps
+```
+
+You should see the MySQL container with status `Up`.
+
+### Important Concept: MYSQL_HOST
+
+In our Flask application, we use:
+
+```bash
+MYSQL_HOST=mysql
+```
+
+Here, `mysql` is the name of the MySQL container.
+
+Docker networking allows the Flask container to find the MySQL container using its container name.
+
+---
+
+# PART 7: RUN FLASK BACKEND CONTAINER
+
+## 9. Run Flask Application
+
+Now we run the Flask backend container and connect it to the same Docker network.
+
+Command:
+
+```bash
+docker run -d -p 5000:5000 --network two-tier -e MYSQL_HOST=mysql -e MYSQL_USER=root -e MYSQL_PASSWORD=root -e MYSQL_DB=devops two-tier-backend:latest
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker run | Creates and starts a container. |
+| -d | Runs in background. |
+| -p 5000:5000 | Maps host port 5000 to container port 5000. |
+| --network two-tier | Connects to Docker network. |
+| MYSQL_HOST=mysql | MySQL container hostname. |
+| MYSQL_USER=root | MySQL username. |
+| MYSQL_PASSWORD=root | MySQL password. |
+| MYSQL_DB=devops | Database name. |
+| two-tier-backend:latest | Flask backend image. |
+
+### What is Port Mapping?
+
+```bash
+-p 5000:5000
+```
+
+- First 5000 – EC2 host port.
+- Second 5000 – Container port.
+
+It allows users to access the Flask application through the EC2 public IP.
+
+### Step 2: Check Running Containers
+
+```bash
+docker ps
+```
+
+You should see two containers:
+
+1. MySQL container.
+2. Flask backend container.
+
+---
+
+# PART 8: VERIFY DOCKER NETWORK
+
+## 10. Check Network Connections
+
+Command:
+
+```bash
+docker network inspect two-tier
+```
+
+This displays all containers connected to the `two-tier` network.
+
+You should see both:
+
+- MySQL container.
+- Flask backend container.
+
+### Why is this important?
+
+Both containers must be connected to the same network so that the Flask application can communicate with the MySQL database using the hostname `mysql`.
+
+## 11. Check Docker Container Logs
+
+Command:
+
+```bash
+docker ps
+```
+
+Copy the container ID or name.
+
+To check MySQL logs:
+
+```bash
+docker logs mysql
+```
+
+To check backend logs:
+
+```bash
+docker logs <container_id>
+```
+
+Logs help us identify application and database connection problems.
+
+---
+
+# PART 9: CONNECT TO MYSQL DATABASE
+
+## 12. Access MySQL Container
+
+Command:
+
+```bash
+docker exec -it mysql bash
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker exec | Executes a command inside a running container. |
+| -it | Interactive terminal. |
+| mysql | Container name. |
+| bash | Opens Bash shell. |
+
+## 13. Login to MySQL
+
+Command:
+
+```bash
+mysql -u root -p
+```
+
+Enter password:
+
+```text
+root
+```
+
+Expected output:
+
+```text
+Welcome to the MySQL monitor.
+mysql>
+```
+
+## 14. Check Database
+
+Display databases:
+
+```sql
+SHOW DATABASES;
+```
+
+Select the database:
+
+```sql
+USE devops;
+```
+
+Expected output:
+
+```text
+Database changed
+```
+
+Display tables:
+
+```sql
+SHOW TABLES;
+```
+
+Display records:
+
+```sql
+SELECT * FROM messages;
+```
+
+This displays the records stored in the messages table, if that table exists.
+
+### Exit MySQL
+
+```sql
+EXIT;
+```
+
+Exit the container:
+
+```bash
+exit
+```
+
+---
+
+# PART 10: CONFIGURE AWS SECURITY GROUP
+
+## 15. Allow Port 5000
+
+To access the Flask application from Chrome, we need to allow inbound traffic on port 5000.
+
+### Steps
+
+1. Open AWS Console.
+2. Go to EC2.
+3. Select your instance.
+4. Open Security.
+5. Click the Security Group.
+6. Select Edit inbound rules.
+7. Click Add rule.
+
+Configure:
+
+| Setting | Value |
+|---|---|
+| Type | Custom TCP |
+| Protocol | TCP |
+| Port range | 5000 |
+| Source | My IP |
+
+8. Click Save rules.
+
+---
+
+# PART 11: ACCESS APPLICATION THROUGH CHROME
+
+## 16. Open Flask Application
+
+Copy the Public IPv4 address of your EC2 instance.
+
+Open Chrome and enter:
+
+```text
+http://YOUR_EC2_PUBLIC_IP:5000
+```
+
+Example:
+
+```text
+http://13.201.99.126:5000
+```
+
+Your Flask application should open in the browser.
+
+### How does the application work?
+
+1. User opens the application in Chrome.
+2. Request reaches the EC2 instance on port 5000.
+3. Docker forwards traffic to the Flask container.
+4. Flask processes the request.
+5. Flask communicates with MySQL through the `two-tier` network.
+6. MySQL stores or retrieves the requested data.
+7. Flask returns the response to the browser.
+
+---
+
+# PART 12: COMPLETE COMMAND REFERENCE
+
+## 17. All Practical Commands
+
+### Docker Networking
+
+```bash
+cd ~/projects
+
+docker network ls
+
+docker network create mynetwork -d bridge
+
+docker network ls
+
+docker network inspect mynetwork
+```
+
+### GitHub Repository
+
+```bash
+git clone https://github.com/LondheShubham153/two-tier-flask-app.git
+
+cd two-tier-flask-app
+
+ls
+
+cat app.py
+```
+
+### Build Backend Image
+
+```bash
+vim Dockerfile
+
+cat Dockerfile
+
+docker build -t two-tier-backend .
+
+docker images
+```
+
+### Create Two-Tier Network
+
+```bash
+docker network create two-tier -d bridge
+
+docker network ls
+
+docker network inspect two-tier
+```
+
+### Run MySQL Container
+
+```bash
+docker run -d --name mysql --network two-tier -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=devops mysql
+```
+
+### Run Flask Backend
+
+```bash
+docker run -d -p 5000:5000 --network two-tier -e MYSQL_HOST=mysql -e MYSQL_USER=root -e MYSQL_PASSWORD=root -e MYSQL_DB=devops two-tier-backend:latest
+```
+
+### Check Containers
+
+```bash
+docker ps
+
+docker ps -a
+
+docker images
+
+docker network ls
+
+docker network inspect two-tier
+```
+
+### Check Logs
+
+```bash
+docker logs mysql
+
+docker logs <container_id>
+```
+
+### Connect to MySQL
+
+```bash
+docker exec -it mysql bash
+
+mysql -u root -p
+```
+
+### MySQL Commands
+
+```sql
+SHOW DATABASES;
+
+USE devops;
+
+SHOW TABLES;
+
+SELECT * FROM messages;
+
+EXIT;
+```
+
+### Exit Container
+
+```bash
+exit
+```
+
+---
+
+# 18. PRACTICAL LEARNING OUTCOME
+
+By completing this practical, I learned:
+
+1. What Docker Networking is.
+2. Different types of Docker networks.
+3. How to create a bridge network.
+4. How to clone a Flask project from GitHub.
+5. How to build a Flask Docker image.
+6. How to create a two-tier Docker network.
+7. How to run a MySQL container.
+8. How to run a Flask backend container.
+9. How to connect two containers using Docker networking.
+10. How to use environment variables for database connectivity.
+11. How to inspect Docker network connections.
+12. How to access MySQL inside a container.
+13. How to execute SQL commands.
+14. How to configure AWS Security Group port 5000.
+15. How to access a Flask application through a browser.
+
+**End of Practical – Docker Networking with Two-Tier Flask Application**
