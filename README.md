@@ -2346,3 +2346,532 @@ By completing this practical, I learned:
 13. Difference between Docker Volumes and Bind Mounts.
 
 **End of Practical – Docker Volumes and Persistent Storage**
+
+
+# Docker Compose Practical on AWS EC2
+
+## Two-Tier Flask Application with MySQL
+
+# 1. Introduction to Docker Compose
+
+### What is Docker Compose?
+
+Docker Compose is a tool used to define and manage multiple Docker containers using a single YAML configuration file.
+
+It allows us to configure services, networks, volumes, ports, and environment variables in one file and run multiple containers together.
+
+### Why do we use Docker Compose?
+
+- To manage multiple containers together.
+- To automate container creation and execution.
+- To connect application and database containers.
+- To configure networks and volumes.
+- To reduce the number of Docker commands.
+- To simplify application deployment.
+
+### Important Components of Docker Compose
+
+| Component | Purpose |
+|---|---|
+| Services | Defines containers. |
+| Image | Specifies Docker image. |
+| Build | Builds an image using Dockerfile. |
+| Ports | Maps host and container ports. |
+| Environment | Defines environment variables. |
+| Volumes | Provides persistent storage. |
+| Networks | Connects containers. |
+| Depends_on | Defines service dependencies. |
+| Restart | Defines container restart policy. |
+| Healthcheck | Checks container health. |
+
+---
+
+# PART 1: DOCKER COMPOSE INSTALLATION
+
+## 2. Navigate to Project Directory
+
+Command:
+
+```bash
+cd ~/projects/two-tier-flask-app
+```
+
+### Explanation
+
+- `cd` – Changes the directory.
+- `projects` – Projects folder.
+- `two-tier-flask-app` – Our application directory.
+
+## 3. Install Docker Compose
+
+Command:
+
+```bash
+sudo apt-get update
+```
+
+This command updates the Ubuntu package list.
+
+Install Docker Compose V2:
+
+```bash
+sudo apt-get install docker-compose-v2
+```
+
+### Explanation
+
+- `sudo` – Executes command with administrator privileges.
+- `apt-get install` – Installs a package.
+- `docker-compose-v2` – Docker Compose V2 package.
+
+## 4. Verify Docker Compose Installation
+
+Command:
+
+```bash
+docker compose version
+```
+
+Expected output:
+
+```text
+Docker Compose version v2.x.x
+```
+
+This confirms that Docker Compose is installed.
+
+---
+
+# PART 2: CREATE DOCKER COMPOSE FILE
+
+## 5. What is docker-compose.yml?
+
+`docker-compose.yml` is a YAML configuration file used to define multiple Docker services and their configurations.
+
+In our project, we define two services:
+
+1. MySQL – Database service.
+2. Flask – Backend application service.
+
+### Step 1: Open Docker Compose File
+
+Command:
+
+```bash
+vim docker-compose.yml
+```
+
+### Step 2: Add Docker Compose Configuration
+
+```yaml
+services:
+  mysql:
+    container_name: mysql
+    image: mysql
+    environment:
+      MYSQL_DATABASE: "devops"
+      MYSQL_ROOT_PASSWORD: "root"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - two-tier
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  flask:
+    build:
+      context: .
+    container_name: two-tier-backend
+    ports:
+      - "5000:5000"
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DB: devops
+    networks:
+      - two-tier
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  mysql-data:
+
+networks:
+  two-tier:
+    driver: bridge
+```
+
+### Step 3: Save the File
+
+In Vim:
+
+- Press `Esc`.
+- Type `:wq`.
+- Press `Enter`.
+
+### Step 4: Verify Docker Compose File
+
+Command:
+
+```bash
+cat docker-compose.yml
+```
+
+This displays the complete Docker Compose configuration.
+
+---
+
+# PART 3: UNDERSTANDING DOCKER COMPOSE COMMANDS
+
+## 6. Start Docker Compose
+
+Command:
+
+```bash
+docker compose up
+```
+
+### Explanation
+
+- `docker compose` – Executes Docker Compose.
+- `up` – Creates and starts the defined services.
+
+This command starts the MySQL and Flask containers.
+
+### Expected Output
+
+```text
+[+] Running 2/2
+ ✔ Container mysql             Started
+ ✔ Container two-tier-backend  Started
+```
+
+Note: The exact output depends on Docker Compose and the current project state.
+
+**Important:** This command runs in the foreground and displays container logs in the terminal.
+
+## 7. Run Docker Compose in Background
+
+Command:
+
+```bash
+docker compose up -d
+```
+
+### Explanation
+
+- `docker compose up` – Creates and starts services.
+- `-d` – Detached mode.
+
+Detached mode runs containers in the background, allowing us to execute other commands in the terminal.
+
+### Expected Output
+
+```text
+[+] Running 2/2
+ ✔ Container mysql             Started
+ ✔ Container two-tier-backend  Started
+```
+
+### Difference Between Both Commands
+
+| Command | Purpose |
+|---|---|
+| docker compose up | Runs containers in foreground. |
+| docker compose up -d | Runs containers in background. |
+
+---
+
+# PART 4: VERIFY DOCKER COMPOSE
+
+## 8. Check Running Containers
+
+Command:
+
+```bash
+docker ps
+```
+
+This displays currently running Docker containers.
+
+Expected output:
+
+```text
+CONTAINER ID   IMAGE          STATUS
+xxxxxxxx       mysql          Up
+xxxxxxxx       flask-image    Up
+```
+
+## 9. Check Compose Services
+
+Command:
+
+```bash
+docker compose ps
+```
+
+Displays containers belonging to the current Compose project.
+
+## 10. Check Docker Images
+
+Command:
+
+```bash
+docker images
+```
+
+Displays all downloaded and locally built Docker images.
+
+## 11. Check Docker Volumes
+
+Command:
+
+```bash
+docker volume ls
+```
+
+Displays all Docker volumes.
+
+You should see the MySQL data volume.
+
+## 12. Check Docker Networks
+
+Command:
+
+```bash
+docker network ls
+```
+
+Displays all available Docker networks.
+
+You should see the Compose network associated with the project.
+
+## 13. View Container Logs
+
+Command:
+
+```bash
+docker compose logs
+```
+
+Displays logs from all Compose services.
+
+To follow logs continuously:
+
+```bash
+docker compose logs -f
+```
+
+---
+
+# PART 5: DOCKER COMPOSE IMPORTANT COMMANDS
+
+## 14. Restart Services
+
+Command:
+
+```bash
+docker compose restart
+```
+
+Restarts all services defined in the Compose file.
+
+## 15. Stop and Remove Containers
+
+Command:
+
+```bash
+docker compose down
+```
+
+Stops and removes the Compose containers and project network.
+
+The named MySQL volume remains available.
+
+## 16. Stop and Remove Containers with Volumes
+
+Command:
+
+```bash
+docker compose down -v
+```
+
+Stops and removes containers, networks, and Compose-managed named volumes.
+
+**Warning:** This removes the MySQL data volume and can permanently delete your database data.
+
+## 17. Rebuild and Start Containers
+
+Command:
+
+```bash
+docker compose up -d --build
+```
+
+Rebuilds the Flask image and starts the services in the background.
+
+Use this command when you make changes to your Dockerfile or application image.
+
+---
+
+# PART 6: DOCKER COMPOSE ARCHITECTURE
+
+## 18. Project Architecture
+
+```text
+              USER
+                |
+                |
+           WEB BROWSER
+                |
+                |
+            AWS EC2
+                |
+                |
+         DOCKER COMPOSE
+                |
+          DOCKER NETWORK
+             two-tier
+                |
+          -------------
+          |           |
+          |           |
+        FLASK        MYSQL
+       CONTAINER    CONTAINER
+          |           |
+          |           |
+      BACKEND      DATABASE
+      PORT 5000    PORT 3306
+          |
+          |
+       VOLUME
+      mysql-data
+```
+
+### How does it work?
+
+1. Docker Compose reads the `docker-compose.yml` file.
+2. It creates the required Docker network and volume.
+3. It creates and starts the MySQL container.
+4. It checks MySQL health.
+5. After MySQL becomes healthy, it starts the Flask service.
+6. Flask connects to MySQL using the hostname `mysql`.
+7. The application becomes accessible through EC2 port 5000.
+
+---
+
+# PART 7: COMPLETE COMMAND REFERENCE
+
+## 19. All Practical Commands
+
+### Navigate to Project
+
+```bash
+cd ~/projects/two-tier-flask-app
+```
+
+### Install Docker Compose
+
+```bash
+sudo apt-get update
+
+sudo apt-get install docker-compose-v2
+
+docker compose version
+```
+
+### Create and Edit File
+
+```bash
+vim docker-compose.yml
+
+cat docker-compose.yml
+```
+
+### Run Docker Compose
+
+```bash
+docker compose up
+
+docker compose up -d
+```
+
+### Verify Containers
+
+```bash
+docker ps
+
+docker compose ps
+
+docker images
+
+docker volume ls
+
+docker network ls
+```
+
+### View Logs
+
+```bash
+docker compose logs
+
+docker compose logs -f
+```
+
+### Restart Services
+
+```bash
+docker compose restart
+```
+
+### Stop Services
+
+```bash
+docker compose down
+```
+
+### Rebuild and Start
+
+```bash
+docker compose up -d --build
+```
+
+---
+
+# 20. PRACTICAL LEARNING OUTCOME
+
+By completing this practical, I learned:
+
+1. What Docker Compose is.
+2. Why Docker Compose is used.
+3. How to install Docker Compose on Ubuntu EC2.
+4. How to create a docker-compose.yml file.
+5. How to configure MySQL and Flask services.
+6. How to configure environment variables.
+7. How to configure Docker networks.
+8. How to configure persistent volumes.
+9. How to use depends_on.
+10. How to configure restart policies.
+11. How to configure health checks.
+12. How to start multiple containers using one command.
+13. Difference between foreground and detached mode.
+14. How to check containers, images, networks, and volumes.
+15. How to stop and restart Docker Compose services.
+
+**End of Practical – Docker Compose with Two-Tier Flask Application**
