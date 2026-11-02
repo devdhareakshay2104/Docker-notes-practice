@@ -3617,3 +3617,448 @@ By completing this practical, I learned:
 
 **End of Practical – Docker Registry and Docker Hub on AWS EC2**
 
+# Multi-Stage Docker Build Practical on AWS EC2
+
+## 1. Introduction to Multi-Stage Docker Build
+
+### What is Multi-Stage Docker Build?
+
+Multi-Stage Docker Build is a technique used in Docker to create smaller and more efficient Docker images by dividing the Dockerfile into multiple stages.
+
+In this technique, we use one stage to build the application and another stage to run the application.
+
+We copy only the required files and dependencies from the builder stage to the final runtime stage.
+
+### Why do we use Multi-Stage Docker Build?
+
+- To reduce Docker image size.
+- To remove unnecessary build tools from the final image.
+- To improve application security.
+- To make deployment faster.
+- To optimize Docker images.
+- To separate the build environment from the runtime environment.
+
+### Difference Between Normal Docker Build and Multi-Stage Build
+
+| Normal Docker Build | Multi-Stage Docker Build |
+|---|---|
+| Uses a single build stage. | Uses multiple build stages. |
+| May contain unnecessary dependencies. | Copies only required dependencies. |
+| Image size can be large. | Final image can be smaller. |
+| Build and runtime environments are together. | Build and runtime environments are separated. |
+
+---
+
+# PART 1: UNDERSTANDING MULTI-STAGE BUILD
+
+## 2. How Multi-Stage Build Works
+
+In this practical, we divide the Dockerfile into two stages.
+
+### Stage 1 – Builder Stage
+
+- Uses the Python base image.
+- Creates the working directory.
+- Copies requirements.txt.
+- Installs the required Python libraries.
+
+### Stage 2 – Runtime Stage
+
+- Uses a lightweight Python image.
+- Copies installed libraries from Stage 1.
+- Copies application source code.
+- Runs the Python application.
+
+### Multi-Stage Build Architecture
+
+    STAGE 1: BUILDER
+          |
+          |
+    Python Base Image
+          |
+          |
+    Install Dependencies
+          |
+          |
+    -----------------------
+          |
+          | COPY --from=builder
+          |
+    -----------------------
+          |
+          |
+    STAGE 2: RUNTIME
+          |
+          |
+    Lightweight Python Image
+          |
+          |
+    Copy Required Libraries
+          |
+          |
+    Copy Application Code
+          |
+          |
+    Run Application
+          |
+          |
+    FINAL DOCKER IMAGE
+
+---
+
+# PART 2: NAVIGATE TO PROJECT DIRECTORY
+
+## 3. Navigate to Flask Application Directory
+
+Command:
+
+```bash
+cd /flask-app-asc
+```
+
+### Explanation
+
+- `cd` – Changes the current directory.
+- `/flask-app-asc` – Flask application project directory.
+
+Note: Use the actual project path where your Flask application is cloned.
+
+## 4. Build the Initial Docker Image
+
+Before applying Multi-Stage Build, create the normal Docker image.
+
+Command:
+
+```bash
+docker build -t flask-app-asc .
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker build | Builds a Docker image. |
+| -t | Assigns a name to the image. |
+| flask-app-asc | Docker image name. |
+| . | Current directory as build context. |
+
+## 5. Check Docker Images
+
+Command:
+
+```bash
+docker images
+```
+
+Expected output (illustrative):
+
+```text
+REPOSITORY      TAG       IMAGE ID       SIZE
+flask-app-asc   latest    xxxxxxxxx      1.01GB
+```
+
+### Observation
+
+The initial Docker image size is approximately 1.01 GB.
+
+This image is relatively large, so we will use Multi-Stage Docker Build to reduce its size.
+
+---
+
+# PART 3: CREATE MULTI-STAGE DOCKERFILE
+
+## 6. Open Dockerfile
+
+Command:
+
+```bash
+vim Dockerfile
+```
+
+### Explanation
+
+- `vim` – Opens the Vim text editor.
+- `Dockerfile` – File containing Docker build instructions.
+
+## 7. Add Multi-Stage Dockerfile Code
+
+Replace the existing Dockerfile content with the following configuration.
+
+```dockerfile
+# =================================
+# STAGE 1: BUILDER STAGE
+# Base image approximately 994 MB
+# =================================
+
+FROM python:3.7 AS builder
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+
+# =================================
+# STAGE 2: RUNTIME STAGE
+# Base image approximately 400 MB
+# =================================
+
+FROM python:3.7-slim
+
+WORKDIR /app
+
+# Copy installed Python libraries from Stage 1
+
+COPY --from=builder /usr/local/lib/python3.7/site-packages/ /usr/local/lib/python3.7/site-packages/
+
+# Copy application source code
+
+COPY . .
+
+# Run the application
+
+ENTRYPOINT ["python", "run.py"]
+```
+
+### Explanation of Dockerfile Instructions
+
+| Instruction | Purpose |
+|---|---|
+| FROM python:3.7 AS builder | Creates the first stage and names it builder. |
+| WORKDIR /app | Creates and selects the working directory. |
+| COPY requirements.txt . | Copies the dependency file into the container. |
+| RUN pip install -r requirements.txt | Installs Python dependencies. |
+| FROM python:3.7-slim | Starts the second stage using a lightweight image. |
+| COPY --from=builder | Copies files from the first stage. |
+| COPY . . | Copies application files into the container. |
+| ENTRYPOINT | Defines the command to execute when the container starts. |
+
+### Important Concept: COPY --from=builder
+
+```dockerfile
+COPY --from=builder /usr/local/lib/python3.7/site-packages/ /usr/local/lib/python3.7/site-packages/
+```
+
+This instruction copies installed Python libraries from the builder stage into the runtime stage.
+
+We do not need to copy the entire builder image.
+
+We copy only the required Python packages.
+
+---
+
+# PART 4: BUILD MULTI-STAGE DOCKER IMAGE
+
+## 8. Save Dockerfile
+
+In Vim:
+
+1. Press `Esc`.
+2. Type `:wq`.
+3. Press `Enter`.
+
+## 9. Build Multi-Stage Docker Image
+
+Command:
+
+```bash
+docker build -t flask-app-mini .
+```
+
+### Explanation
+
+| Part | Meaning |
+|---|---|
+| docker build | Builds a Docker image. |
+| -t | Assigns a name to the image. |
+| flask-app-mini | New image name. |
+| . | Current directory. |
+
+Here, we use a new image name `flask-app-mini` to identify the optimized image.
+
+### Expected Output
+
+```text
+[+] Building ...
+[+] Building finished successfully
+
+Successfully tagged flask-app-mini:latest
+```
+
+The exact output depends on the Docker version and build process.
+
+---
+
+# PART 5: VERIFY DOCKER IMAGE SIZE
+
+## 10. Check Docker Images
+
+Command:
+
+```bash
+docker images
+```
+
+Expected output (approximate values from the practical):
+
+```text
+REPOSITORY       TAG       IMAGE ID       SIZE
+flask-app-asc    latest    xxxxxxxxx      1.01GB
+flask-app-mini   latest    xxxxxxxxx      140MB
+```
+
+### Observation
+
+| Image Name | Approximate Size |
+|---|---:|
+| flask-app-asc | 1.01 GB |
+| flask-app-mini | 140 MB |
+
+The Multi-Stage Docker Build reduces the final image size significantly.
+
+### Why did the image size decrease?
+
+1. The first stage installs all required Python dependencies.
+2. The second stage uses a lightweight Python image.
+3. Only the installed Python libraries are copied.
+4. The complete builder environment is not included in the final image.
+5. Unnecessary build-stage files are excluded.
+
+---
+
+# PART 6: RUN MULTI-STAGE DOCKER CONTAINER
+
+## 11. Run the Optimized Docker Image
+
+Command:
+
+```bash
+docker run flask-app-mini
+```
+
+This command creates and starts a container using the optimized Docker image.
+
+Note: The application must have a valid `run.py` file and compatible dependencies.
+
+If your Flask application listens on port 5000, use:
+
+```bash
+docker run -d -p 5000:5000 --name flask-mini flask-app-mini
+```
+
+## 12. Check Running Containers
+
+Command:
+
+```bash
+docker ps
+```
+
+This displays currently running Docker containers.
+
+## 13. Check Container Logs
+
+Command:
+
+```bash
+docker logs flask-mini
+```
+
+This displays the application logs.
+
+---
+
+# PART 7: IMPORTANT DOCKER COMMANDS
+
+## 14. Complete Practical Commands
+
+### Navigate to Project
+
+```bash
+cd /flask-app-asc
+```
+
+### Build Initial Docker Image
+
+```bash
+docker build -t flask-app-asc .
+```
+
+### Check Images
+
+```bash
+docker images
+```
+
+### Open Dockerfile
+
+```bash
+vim Dockerfile
+```
+
+### Build Multi-Stage Docker Image
+
+```bash
+docker build -t flask-app-mini .
+```
+
+### Check Optimized Image
+
+```bash
+docker images
+```
+
+### Run Container
+
+```bash
+docker run flask-app-mini
+```
+
+### Run Container in Background
+
+```bash
+docker run -d -p 5000:5000 --name flask-mini flask-app-mini
+```
+
+### Check Running Containers
+
+```bash
+docker ps
+```
+
+### Check All Containers
+
+```bash
+docker ps -a
+```
+
+### Check Container Logs
+
+```bash
+docker logs flask-mini
+```
+
+---
+
+# 15. PRACTICAL LEARNING OUTCOME
+
+By completing this practical, I learned:
+
+1. What Multi-Stage Docker Build is.
+2. Why Multi-Stage Docker Build is used.
+3. Difference between normal and multi-stage Docker builds.
+4. How to divide a Dockerfile into multiple stages.
+5. How to create a builder stage.
+6. How to create a runtime stage.
+7. How to use Python base images.
+8. Difference between Python and Python Slim images.
+9. How to use COPY --from=builder.
+10. How to install dependencies in the builder stage.
+11. How to copy required dependencies into the runtime stage.
+12. How to build an optimized Docker image.
+13. How to compare Docker image sizes.
+14. How to run a container using the optimized image.
+
+**End of Practical – Multi-Stage Docker Build on AWS EC2**
+
