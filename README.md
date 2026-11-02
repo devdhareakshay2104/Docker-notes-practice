@@ -2875,3 +2875,745 @@ By completing this practical, I learned:
 15. How to stop and restart Docker Compose services.
 
 **End of Practical – Docker Compose with Two-Tier Flask Application**
+
+
+# Docker Registry Practical on AWS EC2
+
+## Upload and Download Docker Images Using Docker Hub
+
+# 1. Introduction to Docker Registry
+
+### What is Docker Registry?
+
+Docker Registry is a storage and distribution system used to store, manage, upload, and download Docker images.
+
+It allows developers to share Docker images between different systems and servers.
+
+### Why do we use Docker Registry?
+
+- To store Docker images.
+- To upload images from local systems to a remote registry.
+- To download images from a registry.
+- To share images with other developers.
+- To maintain different versions of Docker images.
+- To deploy applications on different servers.
+- To avoid rebuilding images on every server.
+
+### Popular Docker Registries
+
+| Registry | Description |
+| -------- | ----------- |
+| Docker Hub | Cloud-based registry provided by Docker. |
+| Amazon ECR | AWS service used to store Docker images. |
+| GitHub Container Registry | Stores Docker images using GitHub. |
+| Private Registry | Registry hosted privately by an organization. |
+
+### Docker Registry Architecture
+
+    Developer
+        |
+        |
+    Dockerfile
+        |
+        |
+    Docker Build
+        |
+        |
+    Docker Image
+        |
+        |
+    Docker Push
+        |
+        |
+    Docker Hub (Registry)
+        |
+        |
+    Docker Pull
+        |
+        |
+    Another Server
+        |
+        |
+    Docker Container
+
+---
+
+# PART 1: DOCKER IMAGE MANAGEMENT
+
+## 2. Check Available Docker Images
+
+Command:
+
+```bash
+docker images
+```
+
+This command displays all Docker images available on the local system.
+
+Expected output:
+
+```text
+REPOSITORY          TAG       IMAGE ID
+mysql               latest    xxxxxxxx
+two-tier-backend    latest    xxxxxxxx
+```
+
+### Explanation
+
+- `docker images` – Displays locally available Docker images.
+- `REPOSITORY` – Image repository name.
+- `TAG` – Image version.
+- `IMAGE ID` – Unique image identifier.
+
+## 3. Remove a Docker Image
+
+Command:
+
+```bash
+docker rmi <image_id>
+```
+
+Example:
+
+```bash
+docker rmi abc12345
+```
+
+This command removes the specified Docker image.
+
+### Explanation
+
+- `docker rmi` – Removes a Docker image.
+- `image_id` – ID of the image to remove.
+
+**Important:** An image cannot normally be removed while it is being used by an existing container. Remove the dependent containers first.
+
+## 4. Display All Docker Image IDs
+
+Command:
+
+```bash
+docker images -aq
+```
+
+### Explanation
+
+| Part | Meaning |
+| ---- | ------- |
+| docker images | Displays Docker images. |
+| -a | Displays all images, including intermediate images. |
+| -q | Displays only image IDs. |
+
+This command is useful when we have multiple Docker images.
+
+## 5. Remove Multiple Docker Images
+
+Command:
+
+```bash
+docker rmi -f $(docker images -aq)
+```
+
+### Explanation
+
+- `docker rmi` – Removes Docker images.
+- `-f` – Forces image removal where permitted.
+- `docker images -aq` – Retrieves image IDs.
+- `$()` – Executes the command inside it and passes its output to the main command.
+
+**Warning:** This command can remove many local images. Make sure you do not need them before executing it.
+
+---
+
+# PART 2: REMOVE DOCKER CONTAINERS
+
+## 6. Check All Containers
+
+Command:
+
+```bash
+docker ps -a
+```
+
+This command displays all containers, including running and stopped containers.
+
+Expected output:
+
+```text
+CONTAINER ID   IMAGE          STATUS
+xxxxxxxx       mysql          Up
+xxxxxxxx       flask-image    Exited
+```
+
+## 7. Stop and Remove Docker Compose Containers
+
+Command:
+
+```bash
+docker compose down
+```
+
+This command stops and removes containers and the Compose-created network.
+
+The named volumes are retained by default.
+
+**Note:** Removing containers does not automatically remove their Docker images.
+
+After removing the containers, you can remove unused images if required.
+
+---
+
+# PART 3: BUILD DOCKER IMAGE
+
+## 8. Navigate to Project Directory
+
+Command:
+
+```bash
+cd ~/projects/two-tier-flask-app
+```
+
+This navigates to our Two-Tier Flask Application project directory.
+
+## 9. Build Docker Image
+
+Command:
+
+```bash
+docker compose up -d --build
+```
+
+### Explanation
+
+| Part | Meaning |
+| ---- | ------- |
+| docker compose | Executes Docker Compose. |
+| up | Creates and starts services. |
+| -d | Runs containers in background. |
+| --build | Builds images before starting services. |
+
+### Why do we use --build?
+
+We use `--build` to rebuild the application image when changes are made to the Dockerfile or application source code.
+
+Expected output:
+
+```text
+[+] Building
+[+] Running
+Container mysql             Started
+Container two-tier-backend  Started
+```
+
+---
+
+# PART 4: LOGIN TO DOCKER HUB
+
+## 10. What is Docker Hub?
+
+Docker Hub is a cloud-based Docker Registry used to store, manage, upload, and download Docker images.
+
+Website:
+
+https://hub.docker.com/
+
+### Step 1: Login to Docker Hub
+
+Command:
+
+```bash
+docker login
+```
+
+Or:
+
+```bash
+docker login -u devdhareakshay2104
+```
+
+### Explanation
+
+- `docker login` – Authenticates with Docker Hub.
+- `-u` – Specifies the Docker Hub username.
+- `devdhareakshay2104` – Docker Hub username.
+
+Enter your password or Personal Access Token when prompted.
+
+Expected output:
+
+```text
+Login Succeeded
+```
+
+### What is a Personal Access Token (PAT)?
+
+A Personal Access Token is an authentication token used instead of your Docker Hub account password when logging in through the command line.
+
+It can be generated from Docker Hub account settings.
+
+---
+
+# PART 5: TAG DOCKER IMAGE
+
+## 11. What is Docker Image Tagging?
+
+Docker image tagging is the process of assigning a repository name and version tag to an existing Docker image.
+
+It helps identify images before uploading them to Docker Hub.
+
+### Step 1: Check Local Docker Images
+
+Command:
+
+```bash
+docker images
+```
+
+Example output:
+
+```text
+REPOSITORY          TAG       IMAGE ID
+two-tier-backend    latest    xxxxxxxx
+```
+
+### Step 2: Tag the Docker Image
+
+Command:
+
+```bash
+docker image tag two-tier-backend:latest devdhareakshay2104/two-tier-backend:latest
+```
+
+### Explanation
+
+| Part | Meaning |
+| ---- | ------- |
+| docker image tag | Assigns a new tag to an image. |
+| two-tier-backend | Existing local image name. |
+| latest | Existing image tag. |
+| devdhareakshay2104 | Docker Hub username. |
+| two-tier-backend | Docker Hub repository name. |
+| latest | New image version. |
+
+### Step 3: Verify the Tagged Image
+
+Command:
+
+```bash
+docker images
+```
+
+Expected output:
+
+```text
+REPOSITORY                              TAG       IMAGE ID
+two-tier-backend                       latest    xxxxxxxx
+devdhareakshay2104/two-tier-backend     latest    xxxxxxxx
+```
+
+Both names refer to the same local image ID.
+
+---
+
+# PART 6: PUSH IMAGE TO DOCKER HUB
+
+## 12. What is Docker Push?
+
+Docker Push is a command used to upload a local Docker image to a remote Docker Registry.
+
+### Step 1: Push Image
+
+Command:
+
+```bash
+docker push devdhareakshay2104/two-tier-backend:latest
+```
+
+### Explanation
+
+- `docker push` – Uploads the Docker image.
+- `devdhareakshay2104` – Docker Hub username.
+- `two-tier-backend` – Repository name.
+- `latest` – Image tag.
+
+Expected output:
+
+```text
+The push refers to repository
+docker.io/devdhareakshay2104/two-tier-backend
+
+latest: pushed
+```
+
+The exact output may differ depending on whether image layers already exist in Docker Hub.
+
+### Step 2: Verify Image on Docker Hub
+
+1. Open https://hub.docker.com/
+2. Login to your account.
+3. Go to Repositories.
+4. Open `two-tier-backend`.
+5. Check the uploaded image and its tag.
+
+Now your Docker image is stored in Docker Hub.
+
+---
+
+# PART 7: UPDATE DOCKER COMPOSE FILE
+
+## 13. Update docker-compose.yml
+
+After uploading the Flask backend image to Docker Hub, we can configure Docker Compose to use that remote image.
+
+### Step 1: Open Docker Compose File
+
+Command:
+
+```bash
+vim docker-compose.yml
+```
+
+### Step 2: Update Flask Service
+
+Use the Docker Hub image name:
+
+```yaml
+flask:
+  image: devdhareakshay2104/two-tier-backend:latest
+  container_name: two-tier-backend
+  ports:
+    - "5000:5000"
+  environment:
+    MYSQL_HOST: mysql
+    MYSQL_USER: root
+    MYSQL_PASSWORD: root
+    MYSQL_DB: devops
+  networks:
+    - two-tier
+  depends_on:
+    mysql:
+      condition: service_healthy
+  restart: always
+```
+
+### Explanation
+
+- `image` – Specifies the Docker image from Docker Hub.
+- `container_name` – Assigns a name to the container.
+- `ports` – Maps EC2 port 5000 to container port 5000.
+- `environment` – Defines database connection variables.
+- `networks` – Connects Flask to the two-tier network.
+- `depends_on` – Defines the MySQL service dependency.
+- `restart` – Restarts the container automatically when required.
+
+### Step 3: Save the File
+
+In Vim:
+
+1. Press `Esc`.
+2. Type `:wq`.
+3. Press `Enter`.
+
+### Step 4: Verify Configuration
+
+Command:
+
+```bash
+cat docker-compose.yml
+```
+
+---
+
+# PART 8: PULL IMAGE FROM DOCKER HUB
+
+## 14. What is Docker Pull?
+
+Docker Pull is a command used to download a Docker image from a remote registry to the local system.
+
+### Step 1: Pull Image from Docker Hub
+
+Command:
+
+```bash
+docker pull devdhareakshay2104/two-tier-backend:latest
+```
+
+### Explanation
+
+- `docker pull` – Downloads an image.
+- `devdhareakshay2104` – Docker Hub username.
+- `two-tier-backend` – Repository name.
+- `latest` – Image tag.
+
+Expected output:
+
+```text
+latest: Pulling from devdhareakshay2104/two-tier-backend
+
+Status: Downloaded newer image
+```
+
+### Step 2: Verify Downloaded Image
+
+Command:
+
+```bash
+docker images
+```
+
+You should now see:
+
+```text
+REPOSITORY                              TAG
+devdhareakshay2104/two-tier-backend     latest
+```
+
+---
+
+# PART 9: RUN APPLICATION USING DOCKER COMPOSE
+
+## 15. Stop Existing Containers
+
+Command:
+
+```bash
+docker compose down
+```
+
+This removes the existing Compose containers and network while retaining named volumes by default.
+
+## 16. Start Application Again
+
+Command:
+
+```bash
+docker compose up -d
+```
+
+Docker Compose uses the image specified in `docker-compose.yml`.
+
+If the image is not available locally, Compose attempts to pull it from Docker Hub.
+
+## 17. Verify Running Containers
+
+Command:
+
+```bash
+docker ps
+```
+
+Expected output:
+
+```text
+CONTAINER ID   IMAGE                                      STATUS
+xxxxxxxx       mysql                                      Up
+xxxxxxxx       devdhareakshay2104/two-tier-backend:latest Up
+```
+
+## 18. Check Application Logs
+
+Command:
+
+```bash
+docker compose logs
+```
+
+To follow logs continuously:
+
+```bash
+docker compose logs -f
+```
+
+---
+
+# PART 10: DOCKER REGISTRY WORKFLOW
+
+## 19. Complete Docker Registry Architecture
+
+```text
+        TWO-TIER FLASK PROJECT
+                  |
+                  |
+             DOCKERFILE
+                  |
+                  |
+              DOCKER BUILD
+                  |
+                  |
+             DOCKER IMAGE
+                  |
+                  |
+              DOCKER LOGIN
+                  |
+                  |
+              DOCKER TAG
+                  |
+                  |
+              DOCKER PUSH
+                  |
+                  |
+           DOCKER HUB REGISTRY
+                  |
+                  |
+              DOCKER PULL
+                  |
+                  |
+          ANOTHER EC2 SERVER
+                  |
+                  |
+            DOCKER COMPOSE
+                  |
+                  |
+           FLASK CONTAINER
+                  |
+                  |
+            MYSQL CONTAINER
+```
+
+### How does it work?
+
+1. We create a Flask application.
+2. We build a Docker image.
+3. We login to Docker Hub.
+4. We tag the local image with our Docker Hub username.
+5. We push the image to Docker Hub.
+6. We update the Docker Compose file with the remote image name.
+7. We pull the image from Docker Hub.
+8. We start the application using Docker Compose.
+9. The Flask container communicates with MySQL through the Docker network.
+
+---
+
+# PART 11: COMPLETE COMMAND REFERENCE
+
+## 20. All Practical Commands
+
+### Navigate to Project
+
+```bash
+cd ~/projects/two-tier-flask-app
+```
+
+### Docker Image Management
+
+```bash
+docker images
+
+docker images -aq
+
+docker rmi <image_id>
+
+docker rmi -f $(docker images -aq)
+```
+
+### Container Management
+
+```bash
+docker ps -a
+
+docker compose down
+```
+
+### Build Application
+
+```bash
+docker compose up -d --build
+```
+
+### Docker Hub Login
+
+```bash
+docker login
+
+docker login -u devdhareakshay2104
+```
+
+### Tag Image
+
+```bash
+docker image tag two-tier-backend:latest devdhareakshay2104/two-tier-backend:latest
+```
+
+### Push Image
+
+```bash
+docker push devdhareakshay2104/two-tier-backend:latest
+```
+
+### Pull Image
+
+```bash
+docker pull devdhareakshay2104/two-tier-backend:latest
+```
+
+### Update Docker Compose
+
+```bash
+vim docker-compose.yml
+
+cat docker-compose.yml
+```
+
+### Start Application
+
+```bash
+docker compose up -d
+```
+
+### Verify Application
+
+```bash
+docker ps
+
+docker images
+
+docker compose ps
+
+docker compose logs
+```
+
+---
+
+# PART 12: IMPORTANT DIFFERENCES
+
+## 21. Docker Push vs Docker Pull
+
+| Docker Push | Docker Pull |
+| ----------- | ----------- |
+| Uploads an image. | Downloads an image. |
+| Local system to registry. | Registry to local system. |
+| Used to share images. | Used to obtain images. |
+
+## 22. Docker Image vs Docker Registry
+
+| Docker Image | Docker Registry |
+| ------------ | --------------- |
+| Contains application and its dependencies. | Stores and distributes Docker images. |
+| Used to create containers. | Used to share images between systems. |
+| Created using Docker build. | Receives images using Docker push. |
+
+---
+
+# 23. PRACTICAL LEARNING OUTCOME
+
+By completing this practical, I learned:
+
+1. What Docker Registry is.
+2. What Docker Hub is.
+3. Why Docker Registry is used.
+4. How to check Docker images.
+5. How to remove Docker images.
+6. How to remove multiple Docker images.
+7. How to manage Docker containers.
+8. How to login to Docker Hub.
+9. What a Personal Access Token is.
+10. How to tag Docker images.
+11. How to push images to Docker Hub.
+12. How to verify uploaded images.
+13. How to update docker-compose.yml with a remote image.
+14. How to pull images from Docker Hub.
+15. How to run an application using a Docker Hub image.
+16. How to deploy containerized applications using Docker Compose.
+
+**End of Practical – Docker Registry and Docker Hub on AWS EC2**
+
