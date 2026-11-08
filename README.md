@@ -1,7 +1,7 @@
 # Docker Practical on AWS EC2
 ## Complete Practical Notes – From EC2 Setup to Java Application Containerization
 
-# 1. Introduction to Docker
+# 1. Introduction to Docker :
 
 ### What is Docker?
 
@@ -17,7 +17,7 @@ It packages applications along with their dependencies so that they can run cons
 - To make applications portable.
 - To run multiple applications independently.
 
-### Important Docker Components
+### Important Docker Components :
 
 | Component | Description |
 |---|---|
